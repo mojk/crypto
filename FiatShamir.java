@@ -62,16 +62,12 @@ public class FiatShamir {
 	private static BigInteger recoverSecret(BigInteger N, BigInteger X,
 			ProtocolRun[] runs) {
 		// TODO. Recover the secret value x such that x^2 = X (mod N).
-
-		/* What we have after main() is 10 iterations of the protocol, as the hint suggested
-		 * we want to loop through all the runs and compare each of them to see if we have two runs where R is the same
-		**/
 		for(ProtocolRun p : runs) {
 			for(ProtocolRun q : runs) {
 				if(p.R.equals(q.R)) { // Comparing R for each run of the protocol
 					if(runs[i].c == 0) { // we want to know when c = 0, since a = R * S^0 mod n => a = R * 1 mod n
-						BigInteger inv = p.s.modInverse(N); // a = R * S^0 mod N, a^-1 = 1/R * 1 mod N
-						BigInteger secret = inv.multiply(q.s).mod(N); // a^-1 * a' = 1/R * 1 mod N * R * S^1 mod N => S
+						BigInteger inv = p.s.modInverse(N); // a = R * S^0 mod N, a^-1 = 1/R * 1 mod N 
+						BigInteger secret = inv.multiply(q.s).mod(N); // a^-1 * a' = 1/R * 1 mod N * R * S^1 mod N => S mod N
 						if(X.equals(secret.pow(2).mod(N))) //X = secret^2
 							return secret;
 					}

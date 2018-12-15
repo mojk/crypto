@@ -6,7 +6,6 @@ import javax.xml.bind.DatatypeConverter;
 public class CBCXor {
 	
 	public static class Block { // creating a block object so we can store each 12bytes into an object when splitting the encrypted list
-		//public final byte[] msg;
 		public final ArrayList<Byte> msg;
 
 		public Block(ArrayList<Byte> msg) { // constructor for the Block Object
@@ -42,24 +41,26 @@ public class CBCXor {
 	 *            block is 12 bytes long.
 	 */
 	private static String recoverMessage(byte[] first_block, byte[] encrypted) {
-		
-		// List containing all block objects
-		ArrayList<Block> AllBlocks = new ArrayList<Block>();
-		// encrypted converted into ArrayList
-		// first_block converted into ArrayList
-		ArrayList<Byte> encrypted_converted = new ArrayList<Byte>();
-		ArrayList<Byte> first_block_converted = new ArrayList<Byte>();
-		// IV vector
-		ArrayList<Byte> recovered_msg = new ArrayList<Byte>();
 
+		ArrayList<Block> AllBlocks = new ArrayList<Block>(); // contains all the blocks in the encrypted msg
+		ArrayList<Byte> encrypted_converted = new ArrayList<Byte>(); // 
+		ArrayList<Byte> first_block_converted = new ArrayList<Byte>(); // Convert byte[] to ArrayList<Byte>
+		ArrayList<Byte> recovered_msg = new ArrayList<Byte>(); // 
+
+		System.out.print("Plaintext of P1 as bytes ");
 		for(int j = 0; j < first_block.length; j++) {
-			first_block_converted.add(first_block[j]);
+			first_block_converted.add( (byte) first_block[j]);
+			System.out.print(first_block_converted.get(j));
 		}
-		for(int i=0; i < encrypted.length; i++) {
-			encrypted_converted.add(encrypted[i]);
+		System.out.println("");
+
+		System.out.print("Encrypted message as bytes ");
+		for(int i= 0; i < encrypted.length; i++) {
+			encrypted_converted.add( (byte) encrypted[i]);
+			System.out.print(encrypted_converted.get(i));
 		}
-		// set the first block into the encrypted block
-		// initialize empty Block objects and adding them to the List in order c1-c6
+		System.out.println("");
+
 		Block iv = new Block(new ArrayList<Byte>());
 		Block c0 = new Block(new ArrayList<Byte>()); AllBlocks.add(c0); Block c1 = new Block(new ArrayList<Byte>()); AllBlocks.add(c1); 
 		Block c2 = new Block(new ArrayList<Byte>()); AllBlocks.add(c2); Block c3 = new Block(new ArrayList<Byte>()); AllBlocks.add(c3);
@@ -69,28 +70,49 @@ public class CBCXor {
 		System.out.println("Which means we need " + encrypted_converted.size() / 12 + " blocks, where each block contains 12 bytes");
 		System.out.println("AllBlocks Size = " + AllBlocks.size());
 
-		int position = 0; // starting index
-		// For every block in our dynamic list, we want to copy 12 bytes into each block
-		for(Block b : AllBlocks) {
-			for(int i = position; i < encrypted_converted.size(); i++) {
-				b.msg.add(encrypted_converted.get(i));
-				if(i % 11 == 0) {
-					position =+ 12;
+		//TODO
+		int pos = 0;
+			for(Block b : AllBlocks) {
+				System.out.println("Starting to add at position.." + pos);
+				for(int i = pos; i < encrypted_converted.size(); i++) {
+					b.msg.add(encrypted_converted.get(i));
+					pos++;
+					if(pos % 12 == 0) {
+						break;
+					}
 				}
 			}
+			//TODO VERIFY THAT THE BLOCK ACTUALLY HAS SOMETHING IN THEM
+			int blocknr = 0;
+			for(Block cpblocks: AllBlocks) {
+				System.out.println("Printing contents of block: " + blocknr);
+				blocknr++;
+				for(int i = 0; i < cpblocks.msg.size(); i++) {
+					System.out.print(cpblocks.msg.get(i));
+				}
+				System.out.println("");
+			}
+
 			// Now we want to get the IV, c0 XOR p0 = IV
 			for(int ind = 0; ind < 11; ind++) {
 				byte byt = (byte) (c0.msg.get(ind) ^ first_block_converted.get(ind));
-				iv.msg.add(ind,byt);
+				iv.msg.add(byt);
 			}
 			// Starting to decrypt the next blocks in line, c1...c5
 			for(int j = 1; j < AllBlocks.size(); j++) {
-				for(int i = 1; i < 12; i++) {
-					recovered_msg.add( (byte) (iv.msg.get(i) ^ AllBlocks.get(j-1).msg.get(i) ^ AllBlocks.get(j).msg.get(i) ) );
+				for(int i = 0; i < 11; i++) {
+					// IV[0-11] XOR Cj-1[0-11] XOR Cj[0-11]
+					recovered_msg.add((byte) (iv.msg.get(i) ^ AllBlocks.get(j-1).msg.get(i) ^ AllBlocks.get(j).msg.get(i) ));
 			}
 		}
-	}
-		System.out.println(recovered_msg.size());
+		ArrayList<String> message = new ArrayList<String>();
+		for(int i = 0; i < recovered_msg.size(); i++) {
+			message.add(Byte.toString(recovered_msg.get(i)));
+		}
+		for(int i = 0; i < message.size(); i++) {
+			System.out.print(message.get(i));
+		}
+
 		return "Fin";
 	}
 }

@@ -59,7 +59,9 @@ public class CBCXor {
 
 // ----------------------------------------------------------------------------------------------------------------------------------
 // SPLITTING THE ENCRYPTED MESSAGE INTO 5 BLOCKS EACH CONTAINING 12 BYTES, IV | C0 | C1 | C2 | C3 | C4
+// pos : used to set the position in which bytes should be written into each block, 0-11 .. etc
 // ----------------------------------------------------------------------------------------------------------------------------------
+
 			int pos = 0;		
 			for(Block b : AllBlocks) {
 				for(int i = 0; i < encrypted.length; i++) {
@@ -74,20 +76,23 @@ public class CBCXor {
 // GENERATING THE KEY, SINCE WE HAVE P0, BY USING XOR-OPERATION BETWEEN THE PLAINTEXT AND THE CIPHERKEY, WE CAN GET THE KEY, P0 + C0 = KEY
 // REMOVING IV FROM ALL BLOCKS SINCE WHEN DECRYPTING IT WILL NOT BE NEEDED
 // ----------------------------------------------------------------------------------------------------------------------------------------
+
 			for(int i = 0; i < c0.ciphertext.length; i++) {
 				key[i] = ( (byte) (iv.ciphertext[i] ^ first_block[i] ^ c0.ciphertext[i]));
 			}
 			AllBlocks.remove(0);
+
 // ----------------------------------------------------------------------------------------------------------------------------------
 // DECRYPTING, USING THE XOR OPERATION BETWEENT THE KEY AND EVERY BLOCK AND STORING IT INTO AN BYTE[]
+// write : is used to not overwrite each block content when writing to the recovered message array, 0-11.. etc
 // ----------------------------------------------------------------------------------------------------------------------------------
 
-			byte[] newmessage = new byte[AllBlocks.size() * iv.ciphertext.length];
+			byte[] recoveredmsg = new byte[AllBlocks.size() * iv.ciphertext.length];
 			int write = 0;
 			for(int j = 1; j < AllBlocks.size(); j++) {
 				for(int i = 0; i < 12; i++) {
 					// KEY[0-11] XOR Cj-1[0-11] XOR Cj[0-11]
-					newmessage[write] = ((byte) (key[i] ^ AllBlocks.get(j-1).ciphertext[i] ^ AllBlocks.get(j).ciphertext[i] ));
+					recoveredmsg[write] = ((byte) (key[i] ^ AllBlocks.get(j-1).ciphertext[i] ^ AllBlocks.get(j).ciphertext[i] ));
 					write++;
 					if(write % 12 == 0) {
 						break;
@@ -95,6 +100,6 @@ public class CBCXor {
 			}
 		}
 
-		return new String(newmessage);
+		return new String(recoveredmsg);
 	}
 }

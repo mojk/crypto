@@ -4,12 +4,15 @@ import java.util.*;
 import javax.xml.bind.DatatypeConverter;
 
 public class CBCXor {
-	
-	public static class Block { // creating a block object so we can store each 12bytes into an object when splitting the encrypted list
-		public final byte[] msg;
 
-		public Block(byte[] msg) { // constructor for the Block Object
-			this.msg = msg;
+// ----------------------------------------------------------------------------------------------------------------------------------
+// CREATING A OBJECT CALLED BLOCK, WHICH HAS A CIPHERTEXT
+// ----------------------------------------------------------------------------------------------------------------------------------
+	public static class Block {
+		public final byte[] ciphertext;
+
+		public Block(byte[] ciphertext) {
+			this.ciphertext = ciphertext;
 	}
 }
 
@@ -60,7 +63,7 @@ public class CBCXor {
 			int pos = 0;		
 			for(Block b : AllBlocks) {
 				for(int i = 0; i < encrypted.length; i++) {
-					b.msg[i] =  encrypted[pos];
+					b.ciphertext[i] =  encrypted[pos];
 					pos++;
 					if(pos % 12 == 0) {
 						break;
@@ -71,21 +74,20 @@ public class CBCXor {
 // GENERATING THE KEY, SINCE WE HAVE P0, BY USING XOR-OPERATION BETWEEN THE PLAINTEXT AND THE CIPHERKEY, WE CAN GET THE KEY, P0 + C0 = KEY
 // REMOVING IV FROM ALL BLOCKS SINCE WHEN DECRYPTING IT WILL NOT BE NEEDED
 // ----------------------------------------------------------------------------------------------------------------------------------------
-			for(int i = 0; i < c0.msg.length; i++) {
-				key[i] = ( (byte) (iv.msg[i] ^ first_block[i] ^ c0.msg[i]));
+			for(int i = 0; i < c0.ciphertext.length; i++) {
+				key[i] = ( (byte) (iv.ciphertext[i] ^ first_block[i] ^ c0.ciphertext[i]));
 			}
 			AllBlocks.remove(0);
 // ----------------------------------------------------------------------------------------------------------------------------------
 // DECRYPTING, USING THE XOR OPERATION BETWEENT THE KEY AND EVERY BLOCK AND STORING IT INTO AN BYTE[]
 // ----------------------------------------------------------------------------------------------------------------------------------
 
-
-			byte[] newmessage = new byte[AllBlocks.size() * iv.msg.length];
+			byte[] newmessage = new byte[AllBlocks.size() * iv.ciphertext.length];
 			int write = 0;
 			for(int j = 1; j < AllBlocks.size(); j++) {
 				for(int i = 0; i < 12; i++) {
 					// KEY[0-11] XOR Cj-1[0-11] XOR Cj[0-11]
-					newmessage[write] = ((byte) (key[i] ^ AllBlocks.get(j-1).msg[i] ^ AllBlocks.get(j).msg[i] ));
+					newmessage[write] = ((byte) (key[i] ^ AllBlocks.get(j-1).ciphertext[i] ^ AllBlocks.get(j).ciphertext[i] ));
 					write++;
 					if(write % 12 == 0) {
 						break;

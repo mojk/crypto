@@ -57,10 +57,8 @@ public class CBCXor {
 // ----------------------------------------------------------------------------------------------------------------------------------
 // SPLITTING THE ENCRYPTED MESSAGE INTO 5 BLOCKS EACH CONTAINING 12 BYTES, IV | C0 | C1 | C2 | C3 | C4
 // ----------------------------------------------------------------------------------------------------------------------------------
-			int pos = 0;
-			System.out.println("Skipping the first 12 bytes, since we already have P0");		
+			int pos = 0;		
 			for(Block b : AllBlocks) {
-				System.out.println("Starting to add at position.." + pos);
 				for(int i = 0; i < encrypted.length; i++) {
 					b.msg[i] =  encrypted[pos];
 					pos++;
@@ -69,27 +67,19 @@ public class CBCXor {
 					}
 				}
 			}
-
-			// DEBUG MSG
-
-			int blocknr = 0;
-			for(Block ciphertexts: AllBlocks) {
-				System.out.println("Printing contents of block: " + blocknr);
-				blocknr++;
-				for(int i = 0; i < ciphertexts.msg.length; i++) {
-					System.out.print(ciphertexts.msg[i]);
-				}
-				System.out.println("");
-			}
 // ----------------------------------------------------------------------------------------------------------------------------------------
 // GENERATING THE KEY, SINCE WE HAVE P0, BY USING XOR-OPERATION BETWEEN THE PLAINTEXT AND THE CIPHERKEY, WE CAN GET THE KEY, P0 + C0 = KEY
+// REMOVING IV FROM ALL BLOCKS SINCE WHEN DECRYPTING IT WILL NOT BE NEEDED
 // ----------------------------------------------------------------------------------------------------------------------------------------
 			for(int i = 0; i < c0.msg.length; i++) {
 				key[i] = ( (byte) (iv.msg[i] ^ first_block[i] ^ c0.msg[i]));
 			}
+			AllBlocks.remove(0);
 // ----------------------------------------------------------------------------------------------------------------------------------
-// DECRYPTING
+// DECRYPTING, USING THE XOR OPERATION BETWEENT THE KEY AND EVERY BLOCK AND STORING IT INTO AN BYTE[]
 // ----------------------------------------------------------------------------------------------------------------------------------
+
+
 			byte[] newmessage = new byte[AllBlocks.size() * iv.msg.length];
 			int write = 0;
 			for(int j = 1; j < AllBlocks.size(); j++) {

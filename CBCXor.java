@@ -46,7 +46,9 @@ public class CBCXor {
 		byte[] key = new byte[12];
 
 // ----------------------------------------------------------------------------------------------------------------------------------
+// INITIALIZING BLOCK OBJECTS
 // ----------------------------------------------------------------------------------------------------------------------------------
+		
 		Block iv = new Block(new byte[12]); AllBlocks.add(iv);
 		Block c0 = new Block(new byte[12]); AllBlocks.add(c0); Block c1 = new Block(new byte[12]); AllBlocks.add(c1); 
 		Block c2 = new Block(new byte[12]); AllBlocks.add(c2); Block c3 = new Block(new byte[12]); AllBlocks.add(c3);
@@ -67,6 +69,9 @@ public class CBCXor {
 					}
 				}
 			}
+
+			// DEBUG MSG
+
 			int blocknr = 0;
 			for(Block ciphertexts: AllBlocks) {
 				System.out.println("Printing contents of block: " + blocknr);
@@ -86,11 +91,15 @@ public class CBCXor {
 // DECRYPTING
 // ----------------------------------------------------------------------------------------------------------------------------------
 			byte[] newmessage = new byte[AllBlocks.size() * iv.msg.length];
-
+			int write = 0;
 			for(int j = 1; j < AllBlocks.size(); j++) {
-				for(int i = 0; i < 11; i++) {
+				for(int i = 0; i < 12; i++) {
 					// KEY[0-11] XOR Cj-1[0-11] XOR Cj[0-11]
-					newmessage[i] = ((byte) (key[i] ^ AllBlocks.get(j-1).msg[i] ^ AllBlocks.get(j).msg[i] ));
+					newmessage[write] = ((byte) (key[i] ^ AllBlocks.get(j-1).msg[i] ^ AllBlocks.get(j).msg[i] ));
+					write++;
+					if(write % 12 == 0) {
+						break;
+					}
 			}
 		}
 

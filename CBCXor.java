@@ -6,9 +6,9 @@ import javax.xml.bind.DatatypeConverter;
 public class CBCXor {
 	
 	public static class Block { // creating a block object so we can store each 12bytes into an object when splitting the encrypted list
-		public final ArrayList<Byte> msg;
+		public final byte[] msg;
 
-		public Block(ArrayList<Byte> msg) { // constructor for the Block Object
+		public Block(byte[] msg) { // constructor for the Block Object
 			this.msg = msg;
 	}
 }
@@ -42,77 +42,58 @@ public class CBCXor {
 	 */
 	private static String recoverMessage(byte[] first_block, byte[] encrypted) {
 
-		ArrayList<Block> AllBlocks = new ArrayList<Block>(); // contains all the blocks in the encrypted msg
-		ArrayList<Byte> encrypted_converted = new ArrayList<Byte>(); // 
-		ArrayList<Byte> first_block_converted = new ArrayList<Byte>(); // Convert byte[] to ArrayList<Byte>
-		ArrayList<Byte> recovered_msg = new ArrayList<Byte>(); // 
+		ArrayList<Block> AllBlocks = new ArrayList<Block>();
+		byte[] key = new byte[12];
 
-		System.out.print("Plaintext of P1 as bytes ");
-		for(int j = 0; j < first_block.length; j++) {
-			first_block_converted.add( (byte) first_block[j]);
-			System.out.print(first_block_converted.get(j));
-		}
-		System.out.println("");
+// ----------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------------------------
+		Block iv = new Block(new byte[12]); AllBlocks.add(iv);
+		Block c0 = new Block(new byte[12]); AllBlocks.add(c0); Block c1 = new Block(new byte[12]); AllBlocks.add(c1); 
+		Block c2 = new Block(new byte[12]); AllBlocks.add(c2); Block c3 = new Block(new byte[12]); AllBlocks.add(c3);
+		Block c4 = new Block(new byte[12]); AllBlocks.add(c4);
 
-		System.out.print("Encrypted message as bytes ");
-		for(int i= 0; i < encrypted.length; i++) {
-			encrypted_converted.add( (byte) encrypted[i]);
-			System.out.print(encrypted_converted.get(i));
-		}
-		System.out.println("");
-
-		Block iv = new Block(new ArrayList<Byte>());
-		Block c0 = new Block(new ArrayList<Byte>()); AllBlocks.add(c0); Block c1 = new Block(new ArrayList<Byte>()); AllBlocks.add(c1); 
-		Block c2 = new Block(new ArrayList<Byte>()); AllBlocks.add(c2); Block c3 = new Block(new ArrayList<Byte>()); AllBlocks.add(c3);
-		Block c4 = new Block(new ArrayList<Byte>()); AllBlocks.add(c4); Block c5 = new Block(new ArrayList<Byte>()); AllBlocks.add(c5);
-		
-		System.out.println("Length of the encrypted msg is: " + encrypted_converted.size() +" bytes");
-		System.out.println("Which means we need " + encrypted_converted.size() / 12 + " blocks, where each block contains 12 bytes");
-		System.out.println("AllBlocks Size = " + AllBlocks.size());
-
-		//TODO
-		int pos = 0;
+// ----------------------------------------------------------------------------------------------------------------------------------
+// SPLITTING THE ENCRYPTED MESSAGE INTO 5 BLOCKS EACH CONTAINING 12 BYTES, IV | C0 | C1 | C2 | C3 | C4
+// ----------------------------------------------------------------------------------------------------------------------------------
+			int pos = 0;
+			System.out.println("Skipping the first 12 bytes, since we already have P0");		
 			for(Block b : AllBlocks) {
 				System.out.println("Starting to add at position.." + pos);
-				for(int i = pos; i < encrypted_converted.size(); i++) {
-					b.msg.add(encrypted_converted.get(i));
+				for(int i = 0; i < encrypted.length; i++) {
+					b.msg[i] =  encrypted[pos];
 					pos++;
 					if(pos % 12 == 0) {
 						break;
 					}
 				}
 			}
-			//TODO VERIFY THAT THE BLOCK ACTUALLY HAS SOMETHING IN THEM
 			int blocknr = 0;
-			for(Block cpblocks: AllBlocks) {
+			for(Block ciphertexts: AllBlocks) {
 				System.out.println("Printing contents of block: " + blocknr);
 				blocknr++;
-				for(int i = 0; i < cpblocks.msg.size(); i++) {
-					System.out.print(cpblocks.msg.get(i));
+				for(int i = 0; i < ciphertexts.msg.length; i++) {
+					System.out.print(ciphertexts.msg[i]);
 				}
 				System.out.println("");
 			}
-
-			// Now we want to get the IV, c0 XOR p0 = IV
-			for(int ind = 0; ind < 11; ind++) {
-				byte byt = (byte) (c0.msg.get(ind) ^ first_block_converted.get(ind));
-				iv.msg.add(byt);
+// ----------------------------------------------------------------------------------------------------------------------------------------
+// GENERATING THE KEY, SINCE WE HAVE P0, BY USING XOR-OPERATION BETWEEN THE PLAINTEXT AND THE CIPHERKEY, WE CAN GET THE KEY, P0 + C0 = KEY
+// ----------------------------------------------------------------------------------------------------------------------------------------
+			for(int i = 0; i < c0.msg.length; i++) {
+				key[i] = ( (byte) (iv.msg[i] ^ first_block[i] ^ c0.msg[i]));
 			}
-			// Starting to decrypt the next blocks in line, c1...c5
+// ----------------------------------------------------------------------------------------------------------------------------------
+// DECRYPTING
+// ----------------------------------------------------------------------------------------------------------------------------------
+			byte[] newmessage = new byte[AllBlocks.size() * iv.msg.length];
+
 			for(int j = 1; j < AllBlocks.size(); j++) {
 				for(int i = 0; i < 11; i++) {
-					// IV[0-11] XOR Cj-1[0-11] XOR Cj[0-11]
-					recovered_msg.add((byte) (iv.msg.get(i) ^ AllBlocks.get(j-1).msg.get(i) ^ AllBlocks.get(j).msg.get(i) ));
+					// KEY[0-11] XOR Cj-1[0-11] XOR Cj[0-11]
+					newmessage[i] = ((byte) (key[i] ^ AllBlocks.get(j-1).msg[i] ^ AllBlocks.get(j).msg[i] ));
 			}
 		}
-		ArrayList<String> message = new ArrayList<String>();
-		for(int i = 0; i < recovered_msg.size(); i++) {
-			message.add(Byte.toString(recovered_msg.get(i)));
-		}
-		for(int i = 0; i < message.size(); i++) {
-			System.out.print(message.get(i));
-		}
 
-		return "Fin";
+		return new String(newmessage);
 	}
 }

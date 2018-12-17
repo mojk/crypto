@@ -45,16 +45,37 @@ public class ElGamal {
       int second, BigInteger c1, BigInteger c2) {
 //-----------------------------------------------------------------------------------------------------------------
 // DECRYPTING
-// Key = c1 ^ x, where x => generator ^ x mod p (group) = public key of reciever (y)
-// message = c2 * Modinverse(key)
+// c1 =  g ^ r (COMPLETED)
+// c2 = m * h^r, where h = g ^ exp mod p => exp = 	
 //-----------------------------------------------------------------------------------------------------------------
-    BigInteger randomnumber = BigInteger.valueOf((int) (year * Math.pow(10,10)) ).add(BigInteger.valueOf((int) (month * Math.pow(10,8)) )).add( 
-                              BigInteger.valueOf((int) (day * Math.pow(10,6))) ).add(BigInteger.valueOf((int) (hour * Math.pow(10,2)) )).add( 
-                              BigInteger.valueOf((int) (second))).add(BigInteger.valueOf((int) (second * Math.pow(10,-3))));
-    BigInteger test = g.modPow(randomnumber, p); //does not work
-    System.out.println("test" + test);
-    System.out.println("c1" + c1);
-    return test;
+    BigDecimal decimalvalue = BigDecimal.valueOf((year * Math.pow(10,10) )).add(BigDecimal.valueOf((month * Math.pow(10,8) ))).add( 
+                              BigDecimal.valueOf((day * Math.pow(10,6) ))).add(BigDecimal.valueOf((hour * Math.pow(10,4) ))).add(
+                              BigDecimal.valueOf((minute * Math.pow(10,2) )).add(BigDecimal.valueOf((second))));
+    BigInteger r_without_ms = decimalvalue.toBigInteger();
+	//--- calculating the missing part of the randomnumber, ms ---//
+    BigInteger ms = null;
+    BigInteger r = null;
+    BigInteger gen_c1 = null;
+
+    System.out.println("Finding ms...");
+    for(int i = 0; i < 1000; i++) {
+		ms = BigInteger.valueOf((int) i);
+		r = r_without_ms.add(ms);
+		gen_c1 = g.modPow(r, p);
+	    	if(c1.equals(gen_c1)) {
+	    		System.out.println("It's a match!");
+	    		System.out.println("milisecond is " + ms);
+	    		System.out.println("The complete random number is " + r);
+	    		break;
+	    	}
+    }
+    //--- , msg = C1 * modInv(public_key^r) mod p ---//
+    BigInteger msg = null;
+    BigInteger t = y.modPow(r,p);
+    BigInteger neg_num = new BigInteger("-1");
+    BigInteger inv = t.modPow(neg_num,p);
+    msg = c2.multiply(inv).mod(p);
+    return msg;
   }
   
 }
